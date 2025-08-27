@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { env } from "@/env.mjs";
 
 export default function Home() {
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -9,8 +10,8 @@ export default function Home() {
 
   useEffect(() => {
     if (!mapContainerRef.current) return;
-    mapboxgl.accessToken =
-      "pk.eyJ1IjoiYWNyeWxpYzEyNSIsImEiOiJjbWV0cmVjeTIwMXVlMmtxd2g4a2hqamZ0In0.MdrYjEgRpsJITY3L8Bqygw";
+    console.log(env.NEXT_PUBLIC_MAPBOX_PK);
+    mapboxgl.accessToken = env.NEXT_PUBLIC_MAPBOX_PK;
 
     // Marina Bay Sands coordinates [lng, lat]
     // const marinaBaySands: [number, number] = [103.8607, 1.2834];
