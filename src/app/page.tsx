@@ -1,103 +1,131 @@
-import Image from "next/image";
+"use client";
+import { useEffect, useRef } from "react";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+    mapboxgl.accessToken =
+      "pk.eyJ1IjoiYWNyeWxpYzEyNSIsImEiOiJjbWV0cmVjeTIwMXVlMmtxd2g4a2hqamZ0In0.MdrYjEgRpsJITY3L8Bqygw";
+
+    // Marina Bay Sands coordinates [lng, lat]
+    // const marinaBaySands: [number, number] = [103.8607, 1.2834];
+    const marinaBaySands: [number, number] = [103.8607, 1.2834];
+
+    mapRef.current = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: "mapbox://styles/mapbox/streets-v12",
+      center: marinaBaySands,
+      zoom: 15,
+    });
+
+    mapRef.current.on("load", () => {
+      new mapboxgl.Marker()
+        .setLngLat(marinaBaySands)
+        .addTo(mapRef.current as mapboxgl.Map);
+
+      // Add a visible green circle at Marina Bay Sands
+      const map = mapRef.current as mapboxgl.Map;
+      if (!map.getSource("mbs-point")) {
+        map.addSource("mbs-point", {
+          type: "geojson",
+          data: {
+            type: "FeatureCollection",
+            features: [
+              {
+                type: "Feature",
+                properties: {},
+                geometry: {
+                  type: "Point",
+                  coordinates: marinaBaySands,
+                },
+              },
+            ],
+          },
+        });
+      }
+
+      if (!map.getLayer("mbs-circle")) {
+        map.addLayer({
+          id: "mbs-circle",
+          type: "circle",
+          source: "mbs-point",
+          paint: {
+            "circle-radius": 40,
+            "circle-color": "#22c55e", // Tailwind green-500
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "#065f46", // darker green stroke
+          },
+        });
+      }
+
+      // Interactivity: log coordinates when the circle is clicked
+      map.on("click", "mbs-circle", (event) => {
+        const feature = event.features && event.features[0];
+        const coordinates =
+          (feature &&
+            feature.geometry &&
+            (feature.geometry as GeoJSON.Point).coordinates) ||
+          marinaBaySands;
+        // GeoJSON Point coordinates are [lng, lat]
+        const [lng, lat] = coordinates as [number, number];
+        console.log("MBS clicked at:", { lng, lat });
+      });
+
+      // Change cursor to pointer on hover
+      map.on("mouseenter", "mbs-circle", () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+      map.on("mouseleave", "mbs-circle", () => {
+        map.getCanvas().style.cursor = "";
+      });
+
+      // Add a marker for the user's current geolocation (if available)
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const userLngLat: [number, number] = [
+              position.coords.longitude,
+              position.coords.latitude,
+            ];
+            console.log("User's current location:", {
+              lng: userLngLat[0],
+              lat: userLngLat[1],
+            });
+            new mapboxgl.Marker({ color: "#3b82f6" }) // blue marker
+              .setLngLat(userLngLat)
+              .addTo(map);
+          },
+          (error) => {
+            console.warn("Geolocation error:", error.message);
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+      } else {
+        console.warn("Geolocation not supported in this browser.");
+      }
+    });
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+      }
+    };
+  }, []);
+
+  return (
+    <main className="w-full flex flex-col items-center">
+      <div className="w-full max-w-screen-lg p-4">
+        <div
+          id="map-container"
+          ref={mapContainerRef}
+          className="w-full aspect-video"
+        />
+      </div>
+    </main>
   );
 }
